@@ -7,7 +7,7 @@ from pymysql.err import IntegrityError
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 
 # ================= ENV =================
 load_dotenv()
@@ -15,7 +15,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "dev-secret")
 
-# ✅ FIX: Redis fallback
+# ================= LIMITER =================
 limiter = Limiter(
     key_func=get_remote_address,
     app=app,
@@ -44,34 +44,27 @@ app.config.update(
     MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
     MAIL_DEFAULT_SENDER=os.getenv("MAIL_DEFAULT_SENDER")
 )
-
 mail = Mail(app)
 
-
+# ================= HOME =================
 @app.route('/')
 def home():
     conn = get_db()
     cur = conn.cursor()
 
-    # ✅ FIX: variable used in index.html
-    cur.execute("SELECT COUNT(*) AS c FROM teams")
+    cur.execute("SELECT COUNT(*) c FROM teams")
     total_registrations = cur.fetchone()['c']
 
     cur.close()
     conn.close()
 
-    return render_template(
-        "index.html",
-        total_registrations=total_registrations
-    )
-
+    return render_template("index.html", total_registrations=total_registrations)
 
 # ================= EMAIL =================
 def send_approval_email(team_id):
     conn = get_db()
     cur = conn.cursor()
 
-    # ---------- TEAM ----------
     cur.execute("""
         SELECT team_name, leader_email, registration_type
         FROM teams WHERE team_id=%s
@@ -79,17 +72,14 @@ def send_approval_email(team_id):
     team = cur.fetchone()
 
     if not team or not team['leader_email']:
-        print("❌ EMAIL ABORTED: Leader email not found")
         cur.close()
         conn.close()
         return
 
-     # ---------- MEMBERS ----------
+    # ---------- MEMBERS ----------
     cur.execute("""
         SELECT student_id, member_name, phone, college_email
-        FROM members
-        WHERE team_id=%s
-        ORDER BY student_id
+        FROM members WHERE team_id=%s ORDER BY student_id
     """, (team_id,))
     members = cur.fetchall()
 
@@ -111,7 +101,6 @@ def send_approval_email(team_id):
     cur.close()
     conn.close()
 
-    # ---------- EMAIL BODY ----------
     body = f"""
 🎉 NEXOVATE'26 – REGISTRATION APPROVED 🎉
 
@@ -134,42 +123,24 @@ Email      : {m['college_email']}
 """
 
     if events:
-        body += "\n🎯 EVENTS:\n"
-        for e in events:
-            body += f"• {e}\n"
+        body += "\n🎯 EVENTS:\n" + "\n".join(f"• {e}" for e in events)
 
     if workshops:
-        body += "\n🛠 WORKSHOPS:\n"
-        for w in workshops:
-            body += f"• {w}\n"
+        body += "\n\n🛠 WORKSHOPS:\n" + "\n".join(f"• {w}" for w in workshops)
 
-    body += """
-📍 Venue: Kongu Engineering College
-📅 Event: NEXOVATE'26
+    body += "\n\n📍 Venue: Kongu Engineering College\n📅 Event: NEXOVATE'26\n"
 
-Please keep this email for entry verification.
-
-— NEXOVATE'26 Team
-"""
-
-    # ---------- SEND ----------
     try:
-        with mail.connect() as conn:
+        with mail.connect() as mail_conn:
             msg = Message(
                 subject="NEXOVATE'26 – Registration Approved",
                 recipients=[team['leader_email']],
                 body=body
             )
-            conn.send(msg)
-
-        print("✅ EMAIL SENT TO:", team['leader_email'])
-
-    except Exception as e:
+            mail_conn.send(msg)
+    except Exception:
         import traceback
-        print("❌ EMAIL FAILED")
         traceback.print_exc()
-
-
 
 # ================= WORKSHOP LIMIT =================
 def workshop_full(name):
@@ -188,8 +159,10 @@ def workshop_full(name):
         return False
 
     cur.execute("""
-        SELECT COUNT(*) c FROM workshop_registrations
-        WHERE workshop_name=%s
+        SELECT COUNT(*) c
+        FROM workshop_registrations wr
+        JOIN members m ON wr.member_id=m.id
+        WHERE wr.workshop_name=%s
     """, (name,))
     count = cur.fetchone()['c']
 
@@ -198,7 +171,7 @@ def workshop_full(name):
     return count >= row['max_participants']
 
 # ================= TEAM =================
-@app.route('/team', methods=['GET', 'POST'])
+@app.route('/team', methods=['GET','POST'])
 @limiter.limit("20 per minute")
 def team():
     if request.method == 'POST':
@@ -217,31 +190,21 @@ def team():
             tech_events = request.form.getlist('tech_events[]')
             nontech_events = request.form.getlist('nontech_events[]')
 
-            members = []
-            for n, y, d, c, p, e in zip(names, years, depts, colleges, phones, emails):
-                # ✅ FIX: all fields required
-                if all([n, y, d, c, p, e]):
-                    members.append((n, y, d, c, p, e))
+            members = [
+                (n,y,d,c,p,e)
+                for n,y,d,c,p,e in zip(names,years,depts,colleges,phones,emails)
+                if all([n,y,d,c,p,e])
+            ]
 
-            if not members:
-                flash("Enter at least one complete participant", "danger")
+            if not members or len(members) > 3:
+                flash("Invalid participant count", "danger")
                 return redirect('/team')
 
-            if len(members) > 3:
-                flash("Maximum 3 participants allowed", "danger")
-                return redirect('/team')
-
-            # ✅ FIX: Member-3 rule enforced in backend
             if len(members) == 3:
-                allowed = {'IPL Auction', 'Cleverquest'}
-                if not (set(nontech_events) & allowed or any(workshops)):
-                    flash(
-                        "3 participants allowed only for IPL Auction, Cleverquest or Workshops",
-                        "danger"
-                    )
+                if not (set(nontech_events) & {'IPL Auction','Cleverquest'} or any(workshops)):
+                    flash("3 members allowed only for specific events", "danger")
                     return redirect('/team')
 
-            # ✅ FIX: workshop capacity check
             for w in workshops:
                 if w and workshop_full(w):
                     flash(f"{w} workshop is full", "danger")
@@ -263,124 +226,83 @@ def team():
 
             cur.execute("""
                 INSERT INTO teams
-                (team_id, team_name, leader_email,
-                 registration_type, member_count, amount_paid)
+                (team_id, team_name, leader_email, registration_type, member_count, amount_paid)
                 VALUES (%s,%s,%s,%s,%s,%s)
-            """, (
-                team_id,
-                request.form.get('team_name') or None,
-                leader_email,
-                reg_type,
-                len(members),
-                amount
-            ))
+            """, (team_id, request.form.get('team_name'), leader_email, reg_type, len(members), amount))
 
             member_ids = []
-            for i, m in enumerate(members, 1):
-                student_id = f"{team_id}-{i:02d}"
+            for i,m in enumerate(members,1):
                 cur.execute("""
                     INSERT INTO members
-                    (team_id, student_id, member_name,
-                     study_year, department, college_name,
-                     phone, college_email)
+                    (team_id, student_id, member_name, study_year, department, college_name, phone, college_email)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-                """, (team_id, student_id, *m))
+                """, (team_id, f"{team_id}-{i:02d}", *m))
                 member_ids.append(cur.lastrowid)
 
-            # ✅ FIX: prevent duplicate event insert
             for ev in set(tech_events + nontech_events):
-                cur.execute("""
-                    INSERT INTO team_events (team_id, event_name)
-                    VALUES (%s,%s)
-                """, (team_id, ev))
+                cur.execute("INSERT INTO team_events (team_id,event_name) VALUES (%s,%s)", (team_id,ev))
 
-            for mid, w in zip(member_ids, workshops):
+            for mid,w in zip(member_ids,workshops):
                 if w:
-                    cur.execute("""
-                        INSERT INTO workshop_registrations
-                        (member_id, workshop_name)
-                        VALUES (%s,%s)
-                    """, (mid, w))
+                    cur.execute("INSERT INTO workshop_registrations (member_id,workshop_name) VALUES (%s,%s)", (mid,w))
 
             conn.commit()
             return redirect(f"/payment/{team_id}")
 
         except IntegrityError:
             conn.rollback()
-            flash("Phone or Email already registered", "danger")
-        except Exception as e:
-            conn.rollback()
-            print("REG ERROR:", e)
-            flash("Server error occurred", "danger")
+            flash("Duplicate data detected", "danger")
         finally:
             cur.close()
             conn.close()
 
     return render_template("team_register.html")
 
-
 # ================= PAYMENT =================
-@app.route('/payment/<team_id>', methods=['GET', 'POST'])
+@app.route('/payment/<team_id>', methods=['GET','POST'])
 def payment(team_id):
     conn = get_db()
     cur = conn.cursor()
 
-    if request.method == 'POST':
-        cur.execute(
-            "SELECT transaction_id FROM teams WHERE team_id=%s",
-            (team_id,)
-        )
-        existing = cur.fetchone()
+    cur.execute("SELECT amount_paid, member_count, transaction_id FROM teams WHERE team_id=%s", (team_id,))
+    team = cur.fetchone()
 
-        # ✅ FIX: prevent overwrite
-        if existing and existing['transaction_id']:
+    if not team:
+        flash("Invalid payment link", "danger")
+        return redirect('/')
+
+    if request.method == 'POST':
+        if team['transaction_id']:
             flash("Transaction already submitted", "warning")
             return redirect('/')
 
         cur.execute("""
-            UPDATE teams
-            SET transaction_id=%s, payment_status='WAITING'
+            UPDATE teams SET transaction_id=%s, payment_status='WAITING'
             WHERE team_id=%s
         """, (request.form['transaction_id'], team_id))
-
         conn.commit()
         flash("Payment submitted", "success")
         return redirect('/')
 
-    cur.execute("""
-        SELECT amount_paid, member_count
-        FROM teams WHERE team_id=%s
-    """, (team_id,))
-    team = cur.fetchone()
-
     cur.close()
     conn.close()
 
-    return render_template(
-        "payment.html",
-        team_id=team_id,
-        amount=team['amount_paid'],
-        members=team['member_count']
-    )
-
+    return render_template("payment.html", team_id=team_id, amount=team['amount_paid'], members=team['member_count'])
 
 # ================= ADMIN =================
-@app.route('/admin/login', methods=['GET', 'POST'])
+@app.route('/admin/login', methods=['GET','POST'])
+@limiter.limit("10 per minute")
 def admin_login():
     if request.method == 'POST':
         conn = get_db()
         cur = conn.cursor()
 
-        cur.execute(
-            "SELECT password FROM admin WHERE username=%s",
-            (request.form['username'],)
-        )
+        cur.execute("SELECT password FROM admin WHERE username=%s", (request.form['username'],))
         admin = cur.fetchone()
 
         cur.close()
         conn.close()
 
-        # ✅ FIX: hashed password check
         if admin and check_password_hash(admin['password'], request.form['password']):
             session['admin_logged_in'] = True
             return redirect('/admin/dashboard')
@@ -389,100 +311,74 @@ def admin_login():
 
     return render_template('admin/login.html')
 
-
 @app.route('/admin/logout')
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect('/admin/login')
 
-
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if not session.get('admin_logged_in'):
-        flash("Please login as admin", "warning")
         return redirect('/admin/login')
 
     conn = get_db()
     cur = conn.cursor()
 
-    # 🔹 Fetch teams + technical / non-technical events
     cur.execute("""
-        SELECT 
-            t.*,
-            GROUP_CONCAT(DISTINCT te.event_name SEPARATOR ', ') AS team_events
+        SELECT t.*, GROUP_CONCAT(DISTINCT te.event_name) team_events
         FROM teams t
-        LEFT JOIN team_events te ON t.team_id = te.team_id
-        GROUP BY t.team_id
-        ORDER BY t.created_at DESC
+        LEFT JOIN team_events te ON t.team_id=te.team_id
+        GROUP BY t.team_id ORDER BY t.created_at DESC
     """)
     teams = cur.fetchall()
 
     for t in teams:
-        # 🔹 Members
-        cur.execute("""
-            SELECT student_id, member_name, phone, college_email
-            FROM members
-            WHERE team_id=%s
-        """, (t['team_id'],))
+        cur.execute("SELECT student_id,member_name,phone,college_email FROM members WHERE team_id=%s", (t['team_id'],))
         t['members'] = cur.fetchall()
 
-        # 🔹 Workshops
         cur.execute("""
             SELECT DISTINCT wr.workshop_name
             FROM workshop_registrations wr
-            JOIN members m ON wr.member_id = m.id
+            JOIN members m ON wr.member_id=m.id
             WHERE m.team_id=%s
         """, (t['team_id'],))
         workshops = [w['workshop_name'] for w in cur.fetchall()]
 
-        # 🔹 BUILD EVENTS STRING (🔥 THIS WAS MISSING)
-        event_list = []
-
+        events = []
         if t['team_events']:
-            event_list.append(t['team_events'])
-
+            events.append(t['team_events'])
         if workshops:
-            event_list.append("Workshops: " + ", ".join(workshops))
+            events.append("Workshops: " + ", ".join(workshops))
+        t['events'] = " | ".join(events) if events else "—"
 
-        # ✅ THIS IS WHAT TEMPLATE USES
-        t['events'] = " | ".join(event_list) if event_list else "—"
-
-        # ✅ Ensure transaction_id key exists
-        t['transaction_id'] = t['transaction_id'] if t['transaction_id'] else None
-
-    # 🔹 Stats
     cur.execute("SELECT COUNT(*) c FROM teams WHERE payment_status='APPROVED'")
     total_paid = cur.fetchone()['c']
 
-    cur.execute("""
-        SELECT COUNT(*) c FROM teams
-        WHERE payment_status IN ('PENDING','WAITING')
-    """)
+    cur.execute("SELECT COUNT(*) c FROM teams WHERE payment_status='WAITING'")
     pending_count = cur.fetchone()['c']
 
     cur.close()
     conn.close()
 
-    return render_template(
-        "admin/dashboard.html",
-        teams=teams,
-        total_paid=total_paid,
-        pending_count=pending_count
-    )
+    return render_template("admin/dashboard.html", teams=teams, total_paid=total_paid, pending_count=pending_count)
 
-
-# ================= APPROVE =================
 @app.route('/approve/<team_id>')
+@limiter.limit("5 per minute")
 def approve(team_id):
     if not session.get('admin_logged_in'):
         return redirect('/admin/login')
 
     conn = get_db()
     cur = conn.cursor()
-    cur.execute("""
-        UPDATE teams SET payment_status='APPROVED'
-        WHERE team_id=%s
-    """, (team_id,))
+
+    cur.execute("SELECT payment_status FROM teams WHERE team_id=%s", (team_id,))
+    row = cur.fetchone()
+
+    if not row or row['payment_status'] == 'APPROVED':
+        flash("Already approved or invalid team", "warning")
+        return redirect('/admin/dashboard')
+
+    cur.execute("UPDATE teams SET payment_status='APPROVED' WHERE team_id=%s", (team_id,))
     conn.commit()
     cur.close()
     conn.close()
@@ -493,19 +389,11 @@ def approve(team_id):
 
 @app.route('/admin/send-mail/<team_id>')
 def send_mail_admin(team_id):
-    if not session.get('admin_logged_in'):
-        flash("Admin login required", "danger")
-        return redirect('/admin/login')
-
-    try:
+    if session.get('admin_logged_in'):
         send_approval_email(team_id)
-        flash("Approval email sent to leader", "success")
-    except Exception as e:
-        print("MAIL ERROR:", e)
-        flash("Failed to send email", "danger")
-
+        flash("Email sent", "success")
     return redirect('/admin/dashboard')
-
 
 if __name__ == "__main__":
     app.run(debug=True)
+
