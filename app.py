@@ -24,6 +24,7 @@ limiter = Limiter(
     default_limits=["100 per minute"]
 )
 
+app.config.from_object(Config)
 # ================= DB CONNECTION (Local + Aiven) =================
 def get_db():
     # Aiven requires SSL; Local usually does not. 
