@@ -290,6 +290,8 @@ def payment(team_id):
     return render_template("payment.html", team_id=team_id, amount=team['amount_paid'], members=team['member_count'])
 
 # ================= ADMIN =================
+
+# ================= ADMIN LOGIN =================
 @app.route('/admin/login', methods=['GET','POST'])
 @limiter.limit("10 per minute")
 def admin_login():
@@ -297,12 +299,16 @@ def admin_login():
         conn = get_db()
         cur = conn.cursor()
 
-        cur.execute("SELECT password FROM admin WHERE username=%s", (request.form['username'],))
+        cur.execute(
+            "SELECT password FROM admin WHERE username=%s",
+            (request.form['username'],)
+        )
         admin = cur.fetchone()
 
         cur.close()
         conn.close()
 
+        # ✅ FIXED: hashed password check
         if admin and check_password_hash(admin['password'], request.form['password']):
             session['admin_logged_in'] = True
             return redirect('/admin/dashboard')
@@ -311,35 +317,46 @@ def admin_login():
 
     return render_template('admin/login.html')
 
+
 @app.route('/admin/logout')
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect('/admin/login')
 
+
 @app.route('/admin/dashboard')
 def admin_dashboard():
     if not session.get('admin_logged_in'):
+        flash("Please login as admin", "warning")
         return redirect('/admin/login')
 
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT t.*, GROUP_CONCAT(DISTINCT te.event_name) team_events
+        SELECT 
+            t.*, 
+            GROUP_CONCAT(DISTINCT te.event_name) AS team_events
         FROM teams t
-        LEFT JOIN team_events te ON t.team_id=te.team_id
-        GROUP BY t.team_id ORDER BY t.created_at DESC
+        LEFT JOIN team_events te ON t.team_id = te.team_id
+        GROUP BY t.team_id
+        ORDER BY t.created_at DESC
     """)
     teams = cur.fetchall()
 
     for t in teams:
-        cur.execute("SELECT student_id,member_name,phone,college_email FROM members WHERE team_id=%s", (t['team_id'],))
+        # Members
+        cur.execute("""
+            SELECT student_id, member_name, phone, college_email
+            FROM members WHERE team_id=%s
+        """, (t['team_id'],))
         t['members'] = cur.fetchall()
 
+        # Workshops
         cur.execute("""
             SELECT DISTINCT wr.workshop_name
             FROM workshop_registrations wr
-            JOIN members m ON wr.member_id=m.id
+            JOIN members m ON wr.member_id = m.id
             WHERE m.team_id=%s
         """, (t['team_id'],))
         workshops = [w['workshop_name'] for w in cur.fetchall()]
@@ -349,6 +366,7 @@ def admin_dashboard():
             events.append(t['team_events'])
         if workshops:
             events.append("Workshops: " + ", ".join(workshops))
+
         t['events'] = " | ".join(events) if events else "—"
 
     cur.execute("SELECT COUNT(*) c FROM teams WHERE payment_status='APPROVED'")
@@ -360,7 +378,13 @@ def admin_dashboard():
     cur.close()
     conn.close()
 
-    return render_template("admin/dashboard.html", teams=teams, total_paid=total_paid, pending_count=pending_count)
+    return render_template(
+        "admin/dashboard.html",
+        teams=teams,
+        total_paid=total_paid,
+        pending_count=pending_count
+    )
+
 
 @app.route('/approve/<team_id>')
 @limiter.limit("5 per minute")
@@ -371,15 +395,23 @@ def approve(team_id):
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT payment_status FROM teams WHERE team_id=%s", (team_id,))
+    cur.execute(
+        "SELECT payment_status FROM teams WHERE team_id=%s",
+        (team_id,)
+    )
     row = cur.fetchone()
 
     if not row or row['payment_status'] == 'APPROVED':
         flash("Already approved or invalid team", "warning")
         return redirect('/admin/dashboard')
 
-    cur.execute("UPDATE teams SET payment_status='APPROVED' WHERE team_id=%s", (team_id,))
+    cur.execute("""
+        UPDATE teams
+        SET payment_status='APPROVED'
+        WHERE team_id=%s
+    """, (team_id,))
     conn.commit()
+
     cur.close()
     conn.close()
 
@@ -387,12 +419,17 @@ def approve(team_id):
     flash("Payment approved & email sent", "success")
     return redirect('/admin/dashboard')
 
+
 @app.route('/admin/send-mail/<team_id>')
 def send_mail_admin(team_id):
-    if session.get('admin_logged_in'):
-        send_approval_email(team_id)
-        flash("Email sent", "success")
+    if not session.get('admin_logged_in'):
+        flash("Admin login required", "danger")
+        return redirect('/admin/login')
+
+    send_approval_email(team_id)
+    flash("Approval email sent", "success")
     return redirect('/admin/dashboard')
+
 
 if __name__ == "__main__":
     app.run(debug=True)
