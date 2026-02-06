@@ -58,7 +58,7 @@ def home():
     cur.close()
     conn.close()
 
-    return render_template("index.html", total_registrations=total_registrations)
+    return render_template("home.html", total_registrations=total_registrations)
 
 # ================= EMAIL =================
 def send_approval_email(team_id):
