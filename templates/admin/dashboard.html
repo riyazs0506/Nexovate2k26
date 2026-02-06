@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h3 class="text-warning text-center mb-4 fw-bold">Admin Dashboard</h3>
+
+<!-- ================= STATS ================= -->
+<div class="row mb-4 justify-content-center g-3">
+
+  <div class="col-md-4 col-10">
+    <div class="card text-center p-3">
+      <h6 class="text-warning mb-1">Total Paid Registrations</h6>
+      <h2 class="fw-bold text-success">{{ total_paid }}</h2>
+    </div>
+  </div>
+
+  <div class="col-md-4 col-10">
+    <div class="card text-center p-3">
+      <h6 class="text-warning mb-1">Pending Approvals</h6>
+      <h2 class="fw-bold text-warning">{{ pending_count }}</h2>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= FILTERS ================= -->
+<div class="row mb-3 justify-content-center g-2">
+
+  <div class="col-md-4 col-10 text-center">
+    <button class="btn btn-outline-warning btn-sm me-1" onclick="filterStatus('ALL')">All</button>
+    <button class="btn btn-outline-warning btn-sm me-1" onclick="filterStatus('WAITING')">Waiting</button>
+    <button class="btn btn-outline-warning btn-sm me-1" onclick="filterStatus('PENDING')">Pending</button>
+    <button class="btn btn-outline-warning btn-sm" onclick="filterStatus('APPROVED')">Approved</button>
+  </div>
+
+  <div class="col-md-4 col-10">
+    <input type="text"
+           id="eventFilter"
+           class="form-control"
+           placeholder="Filter by Event Name">
+  </div>
+
+</div>
+
+<!-- ================= SEARCH ================= -->
+<div class="row mb-3 justify-content-center">
+  <div class="col-md-6 col-10">
+    <input type="text"
+           id="searchInput"
+           class="form-control"
+           placeholder="Search by Team ID / Name / Email">
+  </div>
+</div>
+
+<!-- ================= TABLE ================= -->
+<div class="table-responsive">
+  <table class="table table-dark table-bordered border-warning text-center align-middle"
+         id="teamTable">
+    <thead>
+      <tr>
+        <th>Team ID</th>
+        <th>Team / Individual</th>
+        <th>Email</th>
+        <th>Transaction ID</th>
+        <th>Events</th>
+        <th>Status</th>
+        <th>Email send</th>
+        <th>Certificate</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for t in teams %}
+      <tr data-status="{{ t.payment_status }}">
+        <td>{{ t.team_id }}</td>
+
+        <td>
+          <button class="btn btn-link text-warning fw-bold"
+                  data-bs-toggle="modal"
+                  data-bs-target="#teamModal-{{ loop.index }}">
+            {{ t.team_name or 'Individual' }}
+          </button>
+        </td>
+
+        <td>{{ t.leader_email }}</td>
+
+        <td class="text-light small">
+  {{ t.transaction_id if t.transaction_id else '—' }}
+        </td>
+
+        <td class="text-light small">
+        {{ t.events if t.events else '—' }}
+        </td>
+
+
+        <td>
+  <span class="fw-bold
+    {% if t.payment_status == 'APPROVED' %}
+      text-success
+    {% elif t.payment_status in ['WAITING', 'PENDING'] %}
+      text-warning
+    {% else %}
+      text-danger
+    {% endif %}">
+    {{ t.payment_status }}
+  </span>
+</td>
+        <td>
+  {% if t.payment_status == 'APPROVED' %}
+    <a href="/admin/send-mail/{{ t.team_id }}"
+       class="btn btn-outline-info btn-sm">
+      Send
+    </a>
+  {% else %}
+    —
+  {% endif %}
+</td>
+
+        <td>
+          {% if t.certificate_enabled == 0 %}
+            <span class="text-muted">Disabled</span>
+          {% else %}
+            <span class="text-success fw-bold">Enabled</span>
+          {% endif %}
+        </td>
+
+        <td>
+  {% if t.payment_status in ['WAITING', 'PENDING'] %}
+    <a href="/approve/{{ t.team_id }}"
+       class="btn btn-success btn-sm">
+      Approve
+    </a>
+  {% else %}
+    —
+  {% endif %}
+</td>
+        
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- ================= MODALS ================= -->
+{% for t in teams %}
+<div class="modal fade" id="teamModal-{{ loop.index }}" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark border-warning">
+
+      <div class="modal-header border-warning">
+        <div>
+          <h5 class="modal-title text-warning">
+            {{ t.team_name or 'Individual' }} – {{ t.team_id }}
+          </h5>
+          <span class="badge bg-warning text-dark">
+            {{ t.events if t.events else 'No events selected' }}
+          </span>
+        </div>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <p class="text-center text-light mb-3">
+          <strong>Amount:</strong>
+          <span class="text-success fw-bold">₹ {{ t.amount_paid }}</span>
+        </p>
+
+        {% if t.members and t.members|length > 0 %}
+        <table class="table table-dark table-bordered border-warning text-center">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in t.members %}
+            <tr>
+              <td>{{ m.student_id }}</td>
+              <td>{{ m.member_name }}</td>
+              <td>{{ m.phone }}</td>
+              <td>{{ m.college_email }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+          <p class="text-center text-muted">No member details found</p>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<!-- ================= SCRIPT ================= -->
+<script>
+function filterStatus(status) {
+  document.querySelectorAll("#teamTable tbody tr").forEach(row => {
+    row.style.display =
+      (status === "ALL" || row.dataset.status === status) ? "" : "none";
+  });
+}
+
+document.getElementById("searchInput").addEventListener("keyup", function () {
+  const v = this.value.toLowerCase();
+  document.querySelectorAll("#teamTable tbody tr").forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(v) ? "" : "none";
+  });
+});
+
+document.getElementById("eventFilter").addEventListener("keyup", function () {
+  const v = this.value.toLowerCase();
+  document.querySelectorAll("#teamTable tbody tr").forEach(r => {
+    r.style.display = r.textContent.toLowerCase().includes(v) ? "" : "none";
+  });
+});
+</script>
+
+{% endblock %}

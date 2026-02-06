@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="card p-4 text-center">
+
+  <h3 class="text-warning mb-3">Registration Status</h3>
+
+  <p class="text-light">
+    <strong>Team ID:</strong> {{ team.team_id }}
+  </p>
+
+  <p class="fw-bold
+    {% if team.payment_status == 'APPROVED' %}text-success
+    {% elif team.payment_status == 'WAITING' %}text-warning
+    {% else %}text-danger{% endif %}">
+    Status: {{ team.payment_status }}
+  </p>
+
+  {% if team.payment_status == 'APPROVED' %}
+    <p class="text-success mt-3">
+      🎉 Payment Approved! You will receive confirmation via email.
+    </p>
+  {% else %}
+    <p class="text-muted mt-2">
+      Please wait for admin verification.
+    </p>
+  {% endif %}
+
+</div>
+
+{% endblock %}
