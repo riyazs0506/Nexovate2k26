@@ -292,8 +292,12 @@ def payment(team_id):
 # ================= ADMIN =================
 
 # ================= ADMIN LOGIN =================
-@app.route('/admin/login', methods=['GET','POST'])
-@limiter.limit("30 per minute")
+@app.route('/admin/login', methods=['GET', 'POST'])
+@limiter.limit(
+    "50 per minute",
+    key_func=get_remote_address,
+    exempt_when=lambda: request.method == "GET"   # ✅ THIS IS THE FIX
+)
 def admin_login():
     if request.method == 'POST':
         conn = get_db()
@@ -308,7 +312,6 @@ def admin_login():
         cur.close()
         conn.close()
 
-        # ✅ FIXED: hashed password check
         if admin and check_password_hash(admin['password'], request.form['password']):
             session['admin_logged_in'] = True
             return redirect('/admin/dashboard')
