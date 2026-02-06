@@ -28,15 +28,17 @@ app.config.from_object(Config)
 # ================= DB CONNECTION (Local + Aiven) =================
 def get_db():
     return pymysql.connect(
-        host=os.getenv("MYSQL_HOST"),
-        port=int(os.getenv("MYSQL_PORT", 3306)),
-        user=os.getenv("MYSQL_USER"),
-        password=os.getenv("MYSQL_PASSWORD"),
-        database=os.getenv("MYSQL_DB"),
+        host=os.environ.get("MYSQL_HOST"),
+        port=int(os.environ.get("MYSQL_PORT", 3306)),
+        user=os.environ.get("MYSQL_USER"),
+        password=os.environ.get("MYSQL_PASSWORD"),
+        database=os.environ.get("MYSQL_DB"),
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=False,
-        ssl={"ssl": {}}  # 🔥 REQUIRED FOR AIVEN
+        connect_timeout=10,
+        ssl={"ssl": {}}
     )
+
 
 
 # ================= MAIL =================
