@@ -27,25 +27,17 @@ limiter = Limiter(
 app.config.from_object(Config)
 # ================= DB CONNECTION (Local + Aiven) =================
 def get_db():
-    # Force SSL for Aiven/Production
-    ssl_mode = os.getenv("MYSQL_SSL_MODE", "REQUIRED") 
-    
-    config = {
-        "host": os.getenv("MYSQL_HOST"),
-        "port": int(os.getenv("MYSQL_PORT", 3306)),
-        "user": os.getenv("MYSQL_USER"),
-        "password": os.getenv("MYSQL_PASSWORD"),
-        "database": os.getenv("MYSQL_DB"),
-        "cursorclass": pymysql.cursors.DictCursor,
-        "autocommit": False,
-        "connect_timeout": 10
-    }
+    return pymysql.connect(
+        host=os.getenv("MYSQL_HOST"),
+        port=int(os.getenv("MYSQL_PORT", 3306)),
+        user=os.getenv("MYSQL_USER"),
+        password=os.getenv("MYSQL_PASSWORD"),
+        database=os.getenv("MYSQL_DB"),
+        cursorclass=pymysql.cursors.DictCursor,
+        autocommit=False,
+        ssl={"ssl": {}}  # 🔥 REQUIRED FOR AIVEN
+    )
 
-    # If we are on Render/Aiven, we MUST use SSL
-    if ssl_mode:
-        config["ssl"] = {"ssl_mode": ssl_mode}
-
-    return pymysql.connect(**config)
 
 # ================= MAIL =================
 app.config.update(
