@@ -172,7 +172,7 @@ def workshop_full(name):
 
 # ================= TEAM =================
 @app.route('/team', methods=['GET','POST'])
-@limiter.limit("20 per minute")
+@limiter.limit("10 per minute")
 def team():
     if request.method == 'POST':
         conn = get_db()
@@ -293,7 +293,7 @@ def payment(team_id):
 
 # ================= ADMIN LOGIN =================
 @app.route('/admin/login', methods=['GET','POST'])
-@limiter.limit("10 per minute")
+@limiter.limit("30 per minute")
 def admin_login():
     if request.method == 'POST':
         conn = get_db()
@@ -387,7 +387,7 @@ def admin_dashboard():
 
 
 @app.route('/approve/<team_id>')
-@limiter.limit("5 per minute")
+@limiter.limit("20 per minute")
 def approve(team_id):
     if not session.get('admin_logged_in'):
         return redirect('/admin/login')
