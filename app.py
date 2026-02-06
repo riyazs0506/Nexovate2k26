@@ -292,39 +292,35 @@ def payment(team_id):
 # ================= ADMIN =================
 
 # ================= ADMIN LOGIN =================
-@app.route('/admin/login', methods=['GET', 'POST'])
-@limiter.limit(
-    "50 per minute",
-    key_func=get_remote_address,
-    exempt_when=lambda: request.method == "GET"   # ✅ THIS IS THE FIX
-)
-def admin_login():
-    if request.method == 'POST':
-        conn = get_db()
-        cur = conn.cursor()
-
-        cur.execute(
-            "SELECT password FROM admin WHERE username=%s",
-            (request.form['username'],)
-        )
-        admin = cur.fetchone()
-
-        cur.close()
-        conn.close()
-
-        if admin and check_password_hash(admin['password'], request.form['password']):
-            session['admin_logged_in'] = True
-            return redirect('/admin/dashboard')
-
-        flash("Invalid admin credentials", "danger")
-
+# ================= ADMIN LOGIN (GET – NO LIMIT) =================
+@app.route('/admin/login', methods=['GET'])
+def admin_login_get():
     return render_template('admin/login.html')
 
 
-@app.route('/admin/logout')
-def admin_logout():
-    session.pop('admin_logged_in', None)
+# ================= ADMIN LOGIN (POST – RATE LIMITED) =================
+@app.route('/admin/login', methods=['POST'])
+@limiter.limit("10 per minute")   # login attempts only
+def admin_login_post():
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT password FROM admin WHERE username=%s",
+        (request.form['username'],)
+    )
+    admin = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if admin and check_password_hash(admin['password'], request.form['password']):
+        session['admin_logged_in'] = True
+        return redirect('/admin/dashboard')
+
+    flash("Invalid admin credentials", "danger")
     return redirect('/admin/login')
+
 
 
 @app.route('/admin/dashboard')
