@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 .env
 __pycache__/
 *.pyc
 instance/
+=======
+git
+>>>>>>> 52d2695511f48b0db7a0c37aa7f061e5269332ac
