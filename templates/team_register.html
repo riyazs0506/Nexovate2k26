@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="card bg-dark border-warning p-4">
+
+  <h3 class="text-warning text-center mb-4 fw-bold">
+    Event Registration
+  </h3>
+
+  <form method="POST" id="teamForm">
+
+    <!-- ================= TEAM NAME ================= -->
+    <div class="mb-4">
+      <label class="text-warning fw-bold mb-2 d-block">
+        Team Name <small class="text-muted">(Optional for individual)</small>
+      </label>
+      <input class="form-control"
+             name="team_name"
+             placeholder="Team Name (leave empty for individual)">
+    </div>
+
+    <!-- ================= MEMBERS ================= -->
+    <h5 class="text-warning mb-3 fw-bold">
+      Participant Details (Max 3)
+    </h5>
+
+    {% for i in range(1,4) %}
+    <div class="border border-warning rounded p-3 mb-4 member-block">
+
+      <h6 class="text-warning fw-semibold mb-3">
+  Member {{ i }}
+  {% if i == 3 %}
+    <small class="text-info d-block mt-1">
+      ⚠ Member 3 is allowed only for IPL Auction / Cleverquest / Workshops
+    </small>
+  {% endif %}
+      </h6>
+
+      <div class="row g-2">
+        <div class="col-md-6">
+          <input class="form-control member-name"
+                 name="member_name[]"
+                 placeholder="Full Name">
+        </div>
+
+        <div class="col-md-6">
+          <input class="form-control"
+                 name="study_year[]"
+                 placeholder="Year (II / III / IV)">
+        </div>
+
+        <div class="col-md-6">
+          <input class="form-control"
+                 name="department[]"
+                 placeholder="Department">
+        </div>
+
+        <div class="col-md-6">
+          <input class="form-control"
+                 name="college_name[]"
+                 placeholder="College Name">
+        </div>
+
+        <div class="col-md-6">
+          <input class="form-control"
+                 name="phone[]"
+                 placeholder="Phone Number">
+        </div>
+
+        <div class="col-md-6">
+          <input class="form-control"
+                 name="college_email[]"
+                 placeholder="College Email">
+        </div>
+      </div>
+
+      <!-- WORKSHOP PER MEMBER -->
+      <div class="mt-3">
+        <label class="text-warning fw-semibold mb-1">
+          Workshop (Optional – Individual)
+        </label>
+        <select class="form-control workshop-select" name="workshop_choice[]">
+          <option value="">-- Not Attending --</option>
+          <option value="Figma Workshop">🎨 Figma Workshop</option>
+          <option value="AR / VR Workshop">🕶️ AR / VR Workshop</option>
+        </select>
+      </div>
+
+    </div>
+    {% endfor %}
+
+      <!-- ================= TECH EVENTS ================= -->
+    <div class="mb-4">
+      <h3 class="text-warning fw-bold mb-2">
+        Choose Your Events Must
+      </h3>
+      <h5 class="text-warning fw-bold mb-2">
+        Technical Events
+      </h5>
+
+      <div class="form-check">
+        <input class="form-check-input event-check"
+               type="checkbox"
+               name="tech_events[]"
+               value="Code Combat">
+        <label class="form-check-label text-light">
+          💻 Code Combat
+        </label>
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input event-check"
+               type="checkbox"
+               name="tech_events[]"
+               value="Design It Right">
+        <label class="form-check-label text-light">
+          🎨 Design It Right ( UI ROYALE)
+        </label>
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input event-check"
+               type="checkbox"
+               name="tech_events[]"
+               value="Paper Presentation">
+        <label class="form-check-label text-light">
+          📄 Paper Presentation
+        </label>
+      </div>
+    </div>
+
+    <!-- ================= NON TECH EVENTS ================= -->
+    <div class="mb-4">
+      <h5 class="text-warning fw-bold mb-2">
+        Non-Technical Events
+      </h5>
+
+      <div class="form-check">
+        <input class="form-check-input event-check"
+               type="checkbox"
+               name="nontech_events[]"
+               value="IPL Auction">
+        <label class="form-check-label text-light">
+          🏏 IPL Auction
+        </label>
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input event-check"
+               type="checkbox"
+               name="nontech_events[]"
+               value="Cleverquest">
+        <label class="form-check-label text-light">
+          🧠 Cleverquest
+        </label>
+      </div>
+
+      <div class="form-check">
+        <input class="form-check-input event-check"
+               type="checkbox"
+               name="nontech_events[]"
+               value="Bluff The Brain">
+        <label class="form-check-label text-light">
+          🎭 Bluff The Brain
+        </label>
+      </div>
+    </div>
+
+
+    <!-- ================= FEE ================= -->
+    <div class="border border-warning rounded p-3 mb-4 text-center">
+      <h6 class="text-warning fw-bold mb-1">
+        Registration Fee
+      </h6>
+      <h4 class="fw-bold text-success">
+        ₹ <span id="totalAmount">0</span>
+      </h4>
+      <small class="text-light">
+        ₹250 per participant
+      </small>
+    </div>
+
+    <button type="submit"
+            class="btn btn-warning w-100 fw-bold py-2">
+      Proceed to Payment
+    </button>
+
+  </form>
+</div>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+const memberBlocks = document.querySelectorAll(".member-block");
+const totalAmount = document.getElementById("totalAmount");
+const form = document.getElementById("teamForm");
+
+function activeMemberCount() {
+  let count = 0;
+  memberBlocks.forEach(b => {
+    if (b.querySelector(".member-name").value.trim()) count++;
+  });
+  return count;
+}
+
+function calculateFee() {
+  totalAmount.innerText = activeMemberCount() * 250;
+}
+
+document.querySelectorAll("input, select").forEach(el => {
+  el.addEventListener("input", calculateFee);
+});
+
+/* ✅ FORM VALIDATION */
+
+form.addEventListener("submit", function (e) {
+  const members = activeMemberCount();
+  const events = document.querySelectorAll(".event-check:checked").length;
+
+  const workshopsSelected = Array.from(
+    document.querySelectorAll(".workshop-select")
+  ).some(w => w.value);
+
+  if (members === 0) {
+    alert("Please enter at least one participant");
+    e.preventDefault();
+    return;
+  }
+
+  if (events === 0 && !workshopsSelected) {
+    alert("Please select at least one event or workshop");
+    e.preventDefault();
+  }
+});
+</script>
+
+
+{% endblock %}

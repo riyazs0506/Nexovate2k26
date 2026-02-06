@@ -1,0 +1,10 @@
+Flask
+flask-mail
+pymysql
+python-dotenv
+gunicorn
+cryptography
+flask-limiter
+redis>=5.0.0
+limits>=3.0
+

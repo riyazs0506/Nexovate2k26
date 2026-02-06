@@ -1,0 +1,449 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<!-- ================= HERO ================= -->
+<!-- ================= HERO ================= -->
+<section class="hero-glow hero-section mb-5">
+
+  <!-- COLLEGE + DEPARTMENT -->
+  <div class="hero-college text-center">
+    <h2 class="college-title">Kongu Engineering College</h2>
+    <h4 class="dept-title">Department of Computer Science and Design</h4>
+  </div>
+
+  <!-- HERO LOGO ROW -->
+  <div class="hero-wrapper">
+
+    <!-- CSDA -->
+    <div class="hero-side csda">
+      <img src="{{ url_for('static', filename='images/csd_association.png') }}"
+           class="hero-logo"
+           alt="CSDA">
+      <div class="hero-subtext"></div>
+    </div>
+
+    <!-- NEXOVATE CENTER -->
+    <div class="hero-center">
+  <img src="{{ url_for('static', filename='images/nexovate_text.png') }}"
+       class="img-fluid hero-center-logo"
+       alt="NEXOVATE 2026">
+</div>
+
+
+    <!-- CDCC -->
+    <div class="hero-side cdcc">
+      <img src="{{ url_for('static', filename='images/csd_coding_club.png') }}"
+           class="hero-logo"
+           alt="CDCC">
+      <div class="hero-subtext"></div>
+    </div>
+
+  </div>
+
+  <!-- DATE -->
+  <div class="text-center mt-4">
+    <span class="badge bg-warning text-dark fs-6 px-4 py-2">
+      📅 18.02.2026
+    </span>
+  </div>
+
+</section>
+
+
+<!-- ================= REG COUNT ================= -->
+<section class="text-center mb-5">
+  <div class="card bg-dark border-warning p-4 mx-auto" style="max-width:350px">
+    <h6 class="text-warning">Overall Registrations</h6>
+    <h1 class="text-success fw-bold">{{ total_registrations }}</h1>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<div class="text-center mb-5">
+  <a href="/team" class="btn btn-warning btn-lg fw-bold px-5">
+    Register Now
+  </a>
+</div>
+<!-- ================= EVENTS ================= -->
+<section class="hero-glow p-4 mb-5">
+  <h3 class="text-warning text-center mb-4">Events & Workshops</h3>
+
+  <!-- ================= TECHNICAL EVENTS ================= -->
+  <h5 class="text-warning mb-3">Technical Events</h5>
+  <div class="row g-4 mb-4">
+
+    <!-- CODE COMBAT -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-warning h-100 p-3">
+        <h5 class="text-warning text-center">💻 Code Combat</h5>
+        <p class="text-light small text-center">Coding & debugging challenge</p>
+
+        <!-- OVERVIEW -->
+        <ul class="text-light small ps-3">
+          <li>Team participation</li>
+          <li>2 members per team</li>
+          <li>Debug code in C/Java/Python</li>
+          <li>No internet. </li>
+          <li>kathar - 9659991439</li>
+        </ul>
+
+        <!-- EXPAND -->
+        <div class="collapse text-light small ps-3" id="moreCodeCombat">
+          <ul>
+            <li>Multiple coding rounds</li>
+            <li>Exciting prizes</li>
+            <li>Winners based on correctness & time</li>
+            <li>Judged by experts</li>
+            
+          </ul>
+        </div>
+
+        <button class="btn btn-link text-warning p-0 fw-semibold"
+                data-bs-toggle="collapse"
+                data-bs-target="#moreCodeCombat">
+          See more
+        </button>
+
+        <!-- ACTIONS -->
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          <a href="{{ url_for('static', filename='rules/CODE COMBAT.pdf') }}"
+             class="btn btn-outline-warning btn-sm px-2 py-0"
+             download>
+            ⬇ Rules
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESIGN IT RIGHT -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-warning h-100 p-3">
+        <h5 class="text-warning text-center">🎨 UI ROYALE (Design It Right)</h5>
+        <p class="text-light small text-center">UI / UX design event </p>
+
+        <ul class="text-light small ps-3">
+          <li>Creative NEW Poster</li>
+          <li>Team participation</li>
+          <li>2 members per team</li>
+          <li>Design-based rounds</li>
+          <li>Balajagadeesh - 9150120633</li>
+        </ul>
+
+        <div class="collapse text-light small ps-3" id="moreDesign">
+          <ul>
+            <li>On-spot design challenge</li>
+            <li>Final poster round</li>
+            <li>Evaluated on creativity</li>
+            
+          </ul>
+        </div>
+
+        <button class="btn btn-link text-warning p-0 fw-semibold"
+                data-bs-toggle="collapse"
+                data-bs-target="#moreDesign">
+          See more
+        </button>
+
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          <a href="{{ url_for('static', filename='rules/DESIGN IT RIGHT.pdf') }}"
+             class="btn btn-outline-warning btn-sm px-2 py-0"
+             download>
+            ⬇ Rules
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAPER PRESENTATION -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-warning h-100 p-3">
+        <h5 class="text-warning text-center">📄 Paper Presentation</h5>
+        <p class="text-light small text-center">Research & innovation</p>
+
+        <ul class="text-light small ps-3">
+          <li>Team participation</li>
+          <li>2 members per team</li>
+          <li>5–7 min, max 7 slides</li>
+          <li>Sashwath - 9080402457</li>
+        </ul>
+
+        <div class="collapse text-light small ps-3" id="morePaper">
+          <ul>
+            <li>Innovative topics</li>
+            <li>Judged on clarity, content & ideas</li>
+            <li>Judged by faculty</li>
+            
+          </ul>
+        </div>
+
+        <button class="btn btn-link text-warning p-0 fw-semibold"
+                data-bs-toggle="collapse"
+                data-bs-target="#morePaper">
+          See more
+        </button>
+
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          <a href="{{ url_for('static', filename='rules/PAPER PRESENTATION.pdf') }}"
+             class="btn btn-outline-warning btn-sm px-2 py-0"
+             download>
+            ⬇ Rules
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- ================= NON-TECHNICAL EVENTS ================= -->
+  <h5 class="text-warning mb-3">Non-Technical Events</h5>
+  <div class="row g-4 mb-4">
+
+    <!-- IPL AUCTION -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-warning h-100 p-3">
+        <h5 class="text-warning text-center">🏏 IPL Auction</h5>
+        <p class="text-light small text-center">Virtual IPL team auction</p>
+
+        <!-- OVERVIEW -->
+        <ul class="text-light small ps-3">
+          <li>Team participation</li>
+          <li>3 members per team</li>
+          <li>Virtual bidding rounds</li>
+          <li>Strategic gameplay</li>
+          <li>Karthik - 9489919570</li>
+        </ul>
+
+        <!-- EXPAND -->
+        <div class="collapse text-light small ps-3" id="moreIPL">
+          <ul>
+            <li>Points-based bidding system</li>
+            <li>Time-limited auction rounds</li>
+            <li>Winner based on team strength</li>
+            
+          </ul>
+        </div>
+
+        <button class="btn btn-link text-warning p-0 fw-semibold"
+                data-bs-toggle="collapse"
+                data-bs-target="#moreIPL">
+          See more
+        </button>
+
+        <!-- ACTIONS -->
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          <a href="{{ url_for('static', filename='rules/IPL AUCTION.pdf') }}"
+            class="btn btn-outline-warning btn-sm px-2 py-0"
+            download>
+            ⬇ Rules
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLEVERQUEST -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-warning h-100 p-3">
+        <h5 class="text-warning text-center">🧠 Cleverquest</h5>
+        <p class="text-light small text-center">Quiz & puzzle challenge</p>
+
+        <ul class="text-light small ps-3">
+          <li>Team participation</li>
+          <li>2 or 3 members per team</li>
+          <li>Fun clue & object-guessing rounds</li>
+          <li>Dharunsuriya - 8072665848</li>
+        </ul>
+
+        <div class="collapse text-light small ps-3" id="moreCleverquest">
+          <ul>
+            <li>Accuracy + speed decide winners</li>
+            <li>Rapid fire rounds</li>
+            <li>Final knockout stage</li>
+            
+          </ul>
+        </div>
+
+        <button class="btn btn-link text-warning p-0 fw-semibold"
+                data-bs-toggle="collapse"
+                data-bs-target="#moreCleverquest">
+          See more
+        </button>
+
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          <a href="{{ url_for('static', filename='rules/CLEVERQUEST.pdf') }}"
+            class="btn btn-outline-warning btn-sm px-2 py-0"
+            download>
+            ⬇ Rules
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- BLUFF THE BRAIN -->
+    <div class="col-md-4">
+      <div class="card bg-dark border-warning h-100 p-3">
+        <h5 class="text-warning text-center">🎭 Bluff The Brain</h5>
+        <p class="text-light small text-center">Logic & deception game</p>
+
+        <ul class="text-light small ps-3">
+          <li>Team participation</li>
+          <li>2 members per team</li>
+          <li>Fun & interactive</li>
+          <li>Roohith Bala - 9578046603</li>
+        </ul>
+
+        <div class="collapse text-light small ps-3" id="moreBluff">
+          <ul>
+            <li>Hidden rounds</li>
+            <li>Movie & song guessing through clues, narration & rapid fire</li>
+            <li>Audience-engaging finale</li>
+            
+          </ul>
+        </div>
+
+        <button class="btn btn-link text-warning p-0 fw-semibold"
+                data-bs-toggle="collapse"
+                data-bs-target="#moreBluff">
+          See more
+        </button>
+
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          <a href="{{ url_for('static', filename='rules/BLUFF THE BRAIN.pdf') }}"
+            class="btn btn-outline-warning btn-sm px-2 py-0"
+            download>
+            ⬇ Rules
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ================= WORKSHOPS ================= -->
+  <h5 class="text-warning mb-3">Workshops</h5>
+  <div class="row g-4">
+
+    <!-- FIGMA -->
+    <div class="col-md-6">
+      <div class="card bg-dark border-warning h-100 p-3">
+        <h5 class="text-warning text-center">🎨 Figma Workshop</h5>
+        <p class="text-light small text-center">Hands-on UI / UX</p>
+
+        <ul class="text-light small ps-3">
+          <li>Individual participation</li>
+          <li>Live hands-on session</li>
+          <li>Limited seats</li>
+          <li>Kishore - 7603930153</li>
+        </ul>
+
+        <div class="collapse text-light small ps-3" id="moreFigma">
+          <ul>
+            <li>Live design demo</li>
+            <li>Practical exercises</li>
+            <li>Participation certificate</li>
+            
+          </ul>
+        </div>
+
+        <button class="btn btn-link text-warning p-0 fw-semibold"
+                data-bs-toggle="collapse"
+                data-bs-target="#moreFigma">
+          See more
+        </button>
+
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          <a href="{{ url_for('static', filename='rules/FIGMA WORKSHOP.pdf') }}"
+             class="btn btn-outline-warning btn-sm px-2 py-0"
+             download>
+            ⬇ Rules
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- AR VR -->
+    <div class="col-md-6">
+      <div class="card bg-dark border-warning h-100 p-3">
+        <h5 class="text-warning text-center">🕶️ AR / VR Workshop</h5>
+        <p class="text-light small text-center">Immersive tech introduction</p>
+
+        <ul class="text-light small ps-3">
+          <li>Individual registration</li>
+          <li>Hands-on exposure</li>
+          <li>Limited seats</li>
+          <li>Piyush - 7708202186</li>
+        </ul>
+
+        <div class="collapse text-light small ps-3" id="moreARVR">
+          <ul>
+            <li>AR & VR demos</li>
+            <li>Industry use cases</li>
+            <li>Certificate provided</li>
+            
+          </ul>
+        </div>
+
+        <button class="btn btn-link text-warning p-0 fw-semibold"
+                data-bs-toggle="collapse"
+                data-bs-target="#moreARVR">
+          See more
+        </button>
+
+        <div class="d-flex justify-content-center gap-2 mt-3">
+          <a href="{{ url_for('static', filename='rules/AR VR WORKSHOP.pdf') }}"
+             class="btn btn-outline-warning btn-sm px-2 py-0"
+             download>
+            ⬇ Rules
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ================= CONTACT ================= -->
+<section class="mb-5 p-4"
+         style="border-top:2px solid #d4af37; border-bottom:2px solid #d4af37;">
+  <h3 class="text-warning text-center mb-4">📞 Contact & Support</h3>
+
+  <div class="row justify-content-center g-4">
+    <div class="col-md-4">
+      <div class="card bg-dark border-warning p-3 text-center">
+        <h6 class="text-warning">Sachin</h6>
+        <a href="tel:9626706653" class="text-success fw-bold">📱 9626706653</a>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card bg-dark border-warning p-3 text-center">
+        <h6 class="text-warning">Sarvesh</h6>
+        <a href="tel:9442443603" class="text-success fw-bold">📱 9442443603</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= MODALS ================= -->
+{% for file in [
+  'CODE COMBAT','DESIGN IT RIGHT','PAPER PRESENTATION',
+  'IPL AUCTION','CLEVERQUEST','BLUFF THE BRAIN',
+  'FIGMA WORKSHOP','AR VR WORKSHOP'
+] %}
+<div class="modal fade" id="modal{{ file|replace(' ', '') }}" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content bg-dark border-warning">
+      <div class="modal-header border-warning">
+        <h5 class="modal-title text-warning">{{ file }}</h5>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <iframe src="{{ url_for('static', filename='rules/' ~ file ~ '.pdf') }}"
+                width="100%" height="500px"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}
